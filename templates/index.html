@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(59, 130, 246, 0.5); }
+            50% { border-color: rgba(59, 130, 246, 1); }
+        }
+        .pulse-border { animation: pulse-border 2s ease-in-out infinite; }
+        #videoFeed { image-rendering: auto; }
+    </style>
+</head>
+<body class="bg-slate-900 text-white font-sans min-h-screen flex flex-col items-center p-4 md:p-8">
+
+    <header class="mb-6 md:mb-10 text-center">
+        <h1 class="text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+            Smart Attendance System
+        </h1>
+        <p class="text-slate-400 mt-2 text-sm md:text-base">Next-gen Face Recognition</p>
+        <div class="mt-4 flex gap-4 justify-center text-sm">
+            <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
+                <i class="fas fa-users text-blue-400"></i>
+                <span id="studentCount" class="ml-2 font-bold">0</span> Registered
+            </div>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 max-w-6xl w-full">
+        <!-- Video Feed -->
+        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-2xl">
+            <div class="relative overflow-hidden rounded-xl border-2 pulse-border">
+                <img id="videoFeed" src="/video_feed" class="w-full h-auto" alt="Live Feed" loading="lazy">
+                <div class="absolute top-4 left-4 bg-red-500 px-3 py-1 rounded-full text-xs font-bold animate-pulse flex items-center gap-2">
+                    <i class="fas fa-circle text-white"></i>
+                    LIVE
+                </div>
+            </div>
+        </div>
+
+<div class="bg-slate-800 p-6 rounded-xl mb-6">
+  <h3 class="text-lg font-bold mb-3">Professor Login</h3>
+
+  <input id="profId" placeholder="Professor ID"
+    class="w-full mb-2 px-4 py-2 bg-slate-900 rounded">
+
+  <input id="profPass" type="password" placeholder="Password"
+    class="w-full mb-3 px-4 py-2 bg-slate-900 rounded">
+
+  <button onclick="profLogin()"
+    class="bg-blue-600 px-4 py-2 rounded font-bold">
+    Login
+  </button>
+
+  <button onclick="startAttendance()"
+    class="bg-red-600 px-4 py-2 rounded font-bold ml-2">
+    Start Attendance
+  </button>
+</div>
+
+        <!-- Controls -->
+        <div class="flex flex-col gap-6">
+            <!-- Registration Section -->
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-user-plus text-blue-400"></i> Register Student
+                </h3>
+                <div class="space-y-3">
+                    <input 
+                        type="text" 
+                        id="studentName" 
+                        placeholder="Enter Student Name" 
+                        class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition"
+                        onkeypress="if(event.key==='Enter') registerFace()"
+                    >
+                    <button 
+                        onclick="registerFace()" 
+                        id="registerBtn"
+                        class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 px-6 py-3 rounded-lg font-bold transition shadow-lg flex items-center justify-center gap-2"
+                    >
+                        <i class="fas fa-camera"></i>
+                        <span>Capture & Register</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Identification Section -->
+            <div id="attendanceSection" class="hidden bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg flex-1">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fas fa-fingerprint text-emerald-400"></i> Identify Student
+                </h3>
+                <button 
+                    onclick="identifyFace()" 
+                    id="identifyBtn"
+                    disabled
+                    class="opacity-50 cursor-not-allowed w-full bg-gradient-to-r from-emerald-600 to-emerald-500 py-4 rounded-xl font-bold text-lg mb-6 transition shadow-lg flex items-center justify-center gap-2">
+
+                    <i class="fas fa-search"></i>
+                    <span>Scan Face</span>
+                </button>
+                
+                <div id="resultBox" class="hidden p-6 rounded-xl text-center border-2 transition-all">
+                    <div id="resultIcon" class="text-5xl mb-3"></div>
+                    <p id="resultText" class="text-xl font-bold mb-2"></p>
+                    <p id="resultSubtext" class="text-sm opacity-75"></p>
+                </div>
+            </div>
+
+            <!-- Registered Students List -->
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold flex items-center gap-2">
+                        <i class="fas fa-list text-purple-400"></i> Registered Students
+                    </h3>
+                    <button onclick="loadStudents()" class="text-sm text-blue-400 hover:text-blue-300">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div id="studentsList" class="space-y-2 max-h-48 overflow-y-auto">
+                    <p class="text-slate-400 text-sm">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-8 right-8 bg-slate-800 border-2 px-6 py-4 rounded-xl shadow-2xl transform translate-y-32 transition-transform duration-300 max-w-md z-50">
+        <div class="flex items-center gap-3">
+            <i id="toastIcon" class="text-2xl"></i>
+            <div>
+                <p id="toastTitle" class="font-bold"></p>
+                <p id="toastMessage" class="text-sm text-slate-300"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isProfessorLoggedIn = false;
+        let isAttendanceActive = false;
+        let isProcessing = false;
+        const DEBOUNCE_TIME = 500;
+
+        function showToast(title, message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const titleEl = document.getElementById('toastTitle');
+            const messageEl = document.getElementById('toastMessage');
+
+            const types = {
+                success: { icon: 'fas fa-check-circle text-emerald-400', border: 'border-emerald-500' },
+                error: { icon: 'fas fa-exclamation-circle text-red-400', border: 'border-red-500' },
+                info: { icon: 'fas fa-info-circle text-blue-400', border: 'border-blue-500' }
+            };
+
+            icon.className = types[type].icon;
+            toast.className = `fixed bottom-8 right-8 bg-slate-800 border-2 ${types[type].border} px-6 py-4 rounded-xl shadow-2xl transition-transform duration-300 max-w-md z-50`;
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+
+            toast.style.transform = 'translateY(0)';
+            setTimeout(() => { toast.style.transform = 'translateY(200%)'; }, 3500);
+        }
+
+        async function loadStudents() {
+            try {
+                const resp = await fetch('/api/students');
+                const data = await resp.json();
+                
+                const list = document.getElementById('studentsList');
+                const count = document.getElementById('studentCount');
+                
+                if (data.status === 'success' && data.students.length > 0) {
+                    list.innerHTML = data.students.map((s, i) => `
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-600 flex items-center gap-3">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-bold">
+                                ${i + 1}
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold">${s.name}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                    count.textContent = data.students.length;
+                } else {
+                    list.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">No students yet</p>';
+                    count.textContent = '0';
+                }
+            } catch (error) {
+                console.error('Error loading students:', error);
+            }
+        }
+        async function profLogin() {
+            const id = document.getElementById("profId").value.trim();
+            const password = document.getElementById("profPass").value.trim();
+
+            if (!id || !password) {
+                showToast("Error", "Enter professor ID and password", "error");
+                return;
+            }
+
+            const resp = await fetch("/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, password })
+            });
+
+            const data = await resp.json();
+
+            if (data.status === "success") {
+                isProfessorLoggedIn = true;
+                showToast("Success", "Professor logged in", "success");
+            } else {
+                showToast("Login Failed", data.message, "error");
+            }
+        }
+
+        async function startAttendance() {
+            if (!isProfessorLoggedIn) {
+                showToast("Blocked", "Professor login required", "error");
+                return;
+            }
+
+            const resp = await fetch("/api/start-attendance", {
+                method: "POST"
+            });
+
+            const data = await resp.json();
+
+            if (resp.ok) {
+                isAttendanceActive = true;
+
+                // SHOW attendance section
+                document.getElementById("attendanceSection").classList.remove("hidden");
+
+                // ENABLE scan button
+                const btn = document.getElementById("identifyBtn");
+                btn.disabled = false;
+                btn.classList.remove("opacity-50", "cursor-not-allowed");
+
+                showToast(
+                    "Attendance Started",
+                    "Students can now scan face",
+                    "success"
+                );
+            } else {
+                showToast("Blocked", data.error || "Unauthorized", "error");
+            }
+        }
+
+
+
+        async function registerFace() {
+            if (isProcessing) return;
+            
+            const name = document.getElementById('studentName').value.trim();
+            if (!name) {
+                showToast('Error', 'Please enter a student name', 'error');
+                return;
+            }
+            
+            isProcessing = true;
+            const btn = document.getElementById('registerBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span class="ml-2">Processing...</span>';
+            btn.disabled = true;
+            
+            try {
+                const formData = new FormData();
+                formData.append('name', name);
+                
+                const resp = await fetch('/api/register', { method: 'POST', body: formData });
+                const data = await resp.json();
+                
+                if (data.status === 'success') {
+                    showToast('Success!', data.message, 'success');
+                    document.getElementById('studentName').value = '';
+                    loadStudents();
+                } else {
+                    showToast('Failed', data.message, 'error');
+                }
+            } catch (error) {
+                showToast('Error', 'Server connection failed', 'error');
+            } finally {
+                setTimeout(() => {
+                    isProcessing = false;
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, DEBOUNCE_TIME);
+            }
+        }
+
+        async function identifyFace() {
+            if (isProcessing) return;
+            
+            isProcessing = true;
+            const btn = document.getElementById('identifyBtn');
+            const box = document.getElementById('resultBox');
+            const text = document.getElementById('resultText');
+            const subtext = document.getElementById('resultSubtext');
+            const icon = document.getElementById('resultIcon');
+            
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span class="ml-2">Scanning...</span>';
+            btn.disabled = true;
+            
+            try {
+                const resp = await fetch('/api/identify');
+                const data = await resp.json();
+                
+                box.classList.remove('hidden');
+                
+                if (data.status === 'found') {
+                    box.className = "p-6 rounded-xl text-center border-2 border-emerald-500 bg-emerald-500/10";
+                    icon.innerHTML = '<i class="fas fa-check-circle text-emerald-400"></i>';
+                    text.innerHTML = `Welcome, <span class="text-emerald-400">${data.name}</span>!`;
+                    subtext.textContent = `Match: ${data.confidence}%`;
+                    subtext.className = "text-sm text-emerald-300";
+                    showToast('Verified', `Identified as ${data.name}`, 'success');
+                } else {
+                    box.className = "p-6 rounded-xl text-center border-2 border-red-500 bg-red-500/10";
+                    icon.innerHTML = '<i class="fas fa-times-circle text-red-400"></i>';
+                    text.innerHTML = '<span class="text-red-400">Not Recognized</span>';
+                    subtext.textContent = data.message || 'Unknown face';
+                    subtext.className = "text-sm text-red-300";
+                    showToast('Failed', data.message, 'error');
+                }
+                
+                setTimeout(() => { box.classList.add('hidden'); }, 4000);
+            } catch (error) {
+                showToast('Error', 'Server connection failed', 'error');
+            } finally {
+                setTimeout(() => {
+                    isProcessing = false;
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, DEBOUNCE_TIME);
+            }
+        }
+
+        // Initialize
+        loadStudents();
+        
+        // Refresh students list every 30 seconds (reduced from 10)
+        setInterval(loadStudents, 30000);
+    </script>
+</body>
+</html>
