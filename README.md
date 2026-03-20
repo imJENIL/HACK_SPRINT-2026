@@ -108,11 +108,3 @@ Firebase (Authentication & Firestore)
 
 ---
 
-
-## ⚙️ How to Run Locally
-
-```bash
-git clone https://github.com/your-username/your-repo-name
-cd your-repo-name
-pip install -r requirements.txt
-python app.py
